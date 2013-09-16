@@ -19,7 +19,7 @@ Install
 -------
 
 <pre>
-$ git clone https://github.com/jacobzelek/rtl_sdr_kit.git
+$ git clone https://github.com/jacobzelek/rtl_sdr_kit.git rtl_sdr_kit
 $ cd rtl_sdr_kit
 $ chmod +x rtl_sdr_kit.sh
 $ ./rtl_sdr_kit.sh install
@@ -44,6 +44,9 @@ RTL2832
 - $ rtl_test - Test functionality of RTL2832 dongle
 - $ rtl_fm
 - $ rtl_tcp
+- $ rtl_sdr
+
+Please refer to http://sdr.osmocom.org/trac/wiki/rtl-sdr for details
 
 General
 - $ gqrx - GUI application for general purpose receiving

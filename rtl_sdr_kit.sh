@@ -39,7 +39,7 @@ preinstall()
 
 git_gqrx()
 {
-	https://github.com/csete/gqrx.git gqrx &> /dev/null
+	git clone https://github.com/csete/gqrx.git gqrx &> /dev/null
 	return $?
 }
 
