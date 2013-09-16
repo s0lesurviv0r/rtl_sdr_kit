@@ -2,6 +2,8 @@
 #    Copyright (C) 2013  Jacob Zelek <jacob@jacobzelek.com>
 #
 #     Updates:
+#     2013-09-15 - GQRX installation added
+#
 #     2013-02-11 - Rewritten to detect if sudo is installed then display commands to install it.
 #		apt-get command given --force-yes argument to force unauthenticated packages to install.
 #		"apt-get update" line added to update package index before installing prereqs (Thanks to Wolfgang Schenk for bug report)
