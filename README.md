@@ -37,10 +37,10 @@ Usage
 
 The following applications can be executed from a shell (terminal)
 
-SDR Prototyping
+**SDR Prototyping**
 - $ gnuradio-companion - Design RF systems using RF "blocks" in a GUI environment
 
-RTL2832
+**RTL2832**
 - $ rtl_test - Test functionality of RTL2832 dongle
 - $ rtl_fm
 - $ rtl_tcp
@@ -48,5 +48,5 @@ RTL2832
 
 Please refer to http://sdr.osmocom.org/trac/wiki/rtl-sdr for details
 
-General
+**General**
 - $ gqrx - GUI application for general purpose receiving
