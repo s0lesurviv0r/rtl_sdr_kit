@@ -277,6 +277,14 @@ fetch()
 	execute "${actions}" "${msgs}"
 }
 
+prerequisites()
+{
+	actions=("preinstall")
+	msgs=("Install prerequisites")
+
+	execute "${actions}" "${msgs}"
+}
+
 check_sudo()
 {
 	sudo > /dev/null 2> /dev/null
@@ -304,10 +312,14 @@ case "$1" in
 	fetch)
 		fetch
 		;;
+	prerequisites)
+		check_sudo
+		prerequisites
+		;;
 	*)
 		echo "rtl_sdr_kit - Installs and updates GNURadio, OsmoSDR, RTLSDR, and GQRX from source code hosted at respective Git repositories."
 		echo ""
-		echo "Usage: $0 [install|update|fetch]"
+		echo "Usage: $0 [install|update|fetch|prerequisites]"
 		exit 1
 		;; 
 esac
