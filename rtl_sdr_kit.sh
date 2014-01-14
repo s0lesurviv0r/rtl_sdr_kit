@@ -62,31 +62,35 @@ in_gqrx()
 	cd build/
 
 	qmake ../
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi	
 	
 	echo "Compiling..."
 
 	make
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	echo "Installing..."
 
 	sudo make install
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	sudo ldconfig
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	cd ../..
@@ -116,31 +120,37 @@ in_gnuradio()
 	cd build/
 
 	cmake ../
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi	
 	
 	echo "Compiling..."
 
 	make
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
+	else
+		exit
 	fi
 
 	echo "Installing..."
 
 	sudo make install
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	sudo ldconfig
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	cd ../..
@@ -199,33 +209,37 @@ in_rtlsdr()
 	cd build/
 
 	cmake ../
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	echo "Compiling..."
 
 	make
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 	echo "Installing..."
 
 	sudo make install
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 	
 	echo "Installing udev rules"
 	sudo cp ../rtl-sdr.rules /etc/udev/rules.d/15-rtl-sdr.rules
 
 	sudo ldconfig
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	cd ../..
@@ -255,8 +269,10 @@ execute()
 
 install()
 {
-	actions=("preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
-	msgs=("Install prequesites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNURadio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
+	#actions=("preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
+	actions=("in_gnuradio")
+	#msgs=("Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNURadio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
+	msgs=("Install GNURadio")
 
 	execute "${actions}" "${msgs}"
 }
@@ -273,6 +289,14 @@ fetch()
 {
 	actions=("pull_gnuradio" "pull_rtlsdr" "pull_osmosdr" "pull_gqrx")
 	msgs=("Git pull GNURadio" "Git pull RTL-SDR" "Git pull OsmoSDR" "Git pull GQRX")
+
+	execute "${actions}" "${msgs}"
+}
+
+prerequisites()
+{
+	actions=("preinstall")
+	msgs=("Install prerequisites")
 
 	execute "${actions}" "${msgs}"
 }
@@ -304,10 +328,14 @@ case "$1" in
 	fetch)
 		fetch
 		;;
+	prerequisites)
+		check_sudo
+		prerequisites
+		;;
 	*)
 		echo "rtl_sdr_kit - Installs and updates GNURadio, OsmoSDR, RTLSDR, and GQRX from source code hosted at respective Git repositories."
 		echo ""
-		echo "Usage: $0 [install|update|fetch]"
+		echo "Usage: $0 [install|update|fetch|prerequisites]"
 		exit 1
 		;; 
 esac
