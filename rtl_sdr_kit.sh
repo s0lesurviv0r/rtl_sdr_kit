@@ -269,10 +269,8 @@ execute()
 
 install()
 {
-	#actions=("preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
-	actions=("in_gnuradio")
-	#msgs=("Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNURadio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
-	msgs=("Install GNURadio")
+	actions=("preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
+	msgs=("Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNURadio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
 
 	execute "${actions}" "${msgs}"
 }
