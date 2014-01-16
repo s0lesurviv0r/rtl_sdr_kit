@@ -26,6 +26,25 @@
 
 preinstall()
 {
+	# Debian-based distros without QT5 will be fine
+	# Newer ones have QT5 and QT4, with QT5 set as the default.
+	# GQRX requires QT4 to be the default
+	QT5_STATUS=`dpkg -l qt5-default | sed -n '6p' | awk '{print $1}'`
+	if [ "$QT5_STATUS" == "ii" ]; then
+	{
+		ADDITIONS="qt4-default"
+	}
+	elif [ "$QT5_STATUS" == "un" ]; then
+	{
+		ADDITIONS=""
+	}
+	else
+	{
+		echo "Can't determine if package qt5-default is properly installed: examine the below for problems"
+		`dpkg -l qt5-default`
+		exit 1		
+	}
+	fi
 	sudo apt-get update
 	sudo apt-get -y --force-yes install libfontconfig1-dev libxrender-dev libpulse-dev \
 	swig g++ automake autoconf libtool python-dev libfftw3-dev \
@@ -34,7 +53,7 @@ preinstall()
 	libqt4-dev python-numpy ccache python-opengl libgsl0-dev \
 	python-cheetah python-lxml doxygen qt4-dev-tools \
 	libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 \
-	cmake git-core qtcreator
+	cmake git-core qtcreator $ADDITIONS
 	
 	return 0
 }
