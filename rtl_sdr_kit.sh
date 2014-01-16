@@ -267,18 +267,38 @@ execute()
 	done
 }
 
+check_memory()
+{
+	# Compiling GNUradio needs at least this amount of memory or the compiler will crash
+	# This memory requirement arrived at by experimentation. Accurate to +- 50Mb
+	MINIMUM_MEM_KB=1450000
+	SWAP_KB=`cat /proc/swaps | awk '!/^Filename.*/ { print $3 }'`
+	MEMINFO=`cat /proc/meminfo`
+	MEM_FREE_KB=`cat /proc/meminfo | awk '/^MemFree.*/ { print $2 }'`
+	BUFFERS_KB=`cat /proc/meminfo | awk '/^Buffers.*/ { print $2 }'`
+	CACHED_KB=`cat /proc/meminfo | awk '/^Cached.*/ { print $2 }'`
+	AVAILABLE_KB=`expr $SWAP_KB + $MEM_FREE_KB + $BUFFERS_KB + $CACHED_KB`
+	echo "Available memory: ${AVAILABLE_KB}Kb"
+	if [ $AVAILABLE_KB -lt $MINIMUM_MEM_KB ]
+	then
+		echo "You must have at least ${MINIMUM_MEM_KB}Kb memory free to compile GNUradio (you have ${AVAILABLE_KB}Kb). Add more RAM or swap space."
+		return 1
+	fi
+	return 0
+}
+
 install()
 {
-	actions=("preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
-	msgs=("Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNURadio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
+	actions=("check_memory" "preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
+	msgs=("Check memory" "Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNU Radio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
 
 	execute "${actions}" "${msgs}"
 }
 
 update()
 {
-	actions=("pull_gnuradio" "pull_rtlsdr" "pull_osmosdr" "pull_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
-	msgs=("Git pull GNURadio" "Git pull RTL-SDR" "Git pull OsmoSDR" "Git pull GQRX" "Install GNURadio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
+	actions=("check_memory" "pull_gnuradio" "pull_rtlsdr" "pull_osmosdr" "pull_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
+	msgs=("Check memory" "Git pull GNU Radio" "Git pull RTL-SDR" "Git pull OsmoSDR" "Git pull GQRX" "Install GNU Radio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
 
 	execute "${actions}" "${msgs}"
 }
