@@ -29,20 +29,26 @@ preinstall()
 	# Debian-based distros without QT5 will be fine
 	# Newer ones have QT5 and QT4, with QT5 set as the default.
 	# GQRX requires QT4 to be the default
-	QT5_STATUS=`dpkg -l qt5-default | sed -n '6p' | awk '{print $1}'`
-	if [ "$QT5_STATUS" == "ii" ]; then
-	{
-		ADDITIONS="qt4-default"
-	}
-	elif [ "$QT5_STATUS" == "un" ]; then
-	{
-		ADDITIONS=""
-	}
-	else
-	{
-		echo "Can't determine if package qt5-default is properly installed: examine the below for problems"
-		`dpkg -l qt5-default`
-		exit 1		
+	TMP=`dpkg -l qt5-default 2>&1`
+	QT5_RETURN=$?
+	if [ $QT5_RETURN -eq 0 ]; then
+	{	# QT5 is available, which may stop GQRX from compiling
+		QT5_STATUS=`dpkg -l qt5-default 2>&1 | sed -n '6p' | awk '{print $1}'`
+		if [ "$QT5_STATUS" == "ii" ]; then
+		{
+			ADDITIONS="qt4-default"
+		}
+		elif [ "$QT5_STATUS" == "un" ]; then
+		{	# Your distribution is already set to use QT4 ("un")
+			ADDITIONS=""
+		}
+		else
+		{
+			echo "Can't determine if package qt5-default is properly installed: examine the below for problems"
+			`dpkg -l qt5-default`
+			exit 1		
+		}
+		fi
 	}
 	fi
 	sudo apt-get update
