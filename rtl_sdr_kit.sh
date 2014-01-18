@@ -26,6 +26,31 @@
 
 preinstall()
 {
+	# Debian-based distros without QT5 will be fine
+	# Newer ones have QT5 and QT4, with QT5 set as the default.
+	# GQRX requires QT4 to be the default
+	TMP=`dpkg -l qt5-default 2>&1`
+	QT5_RETURN=$?
+	if [ $QT5_RETURN -eq 0 ]; then
+	{	# QT5 is available, which may stop GQRX from compiling
+		QT5_STATUS=`dpkg -l qt5-default 2>&1 | sed -n '6p' | awk '{print $1}'`
+		if [ "$QT5_STATUS" == "ii" ]; then
+		{
+			ADDITIONS="qt4-default"
+		}
+		elif [ "$QT5_STATUS" == "un" ]; then
+		{	# Your distribution is already set to use QT4 ("un")
+			ADDITIONS=""
+		}
+		else
+		{
+			echo "Can't determine if package qt5-default is properly installed: examine the below for problems"
+			`dpkg -l qt5-default`
+			exit 1		
+		}
+		fi
+	}
+	fi
 	sudo apt-get update
 	sudo apt-get -y --force-yes install libfontconfig1-dev libxrender-dev libpulse-dev \
 	swig g++ automake autoconf libtool python-dev libfftw3-dev \
@@ -34,7 +59,7 @@ preinstall()
 	libqt4-dev python-numpy ccache python-opengl libgsl0-dev \
 	python-cheetah python-lxml doxygen qt4-dev-tools \
 	libqwt5-qt4-dev libqwtplot3d-qt4-dev pyqt4-dev-tools python-qwt5-qt4 \
-	cmake git-core qtcreator
+	cmake git-core qtcreator $ADDITIONS
 	
 	return 0
 }
@@ -62,31 +87,35 @@ in_gqrx()
 	cd build/
 
 	qmake ../
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi	
 	
 	echo "Compiling..."
 
 	make
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	echo "Installing..."
 
 	sudo make install
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	sudo ldconfig
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	cd ../..
@@ -116,31 +145,35 @@ in_gnuradio()
 	cd build/
 
 	cmake ../
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi	
 	
 	echo "Compiling..."
 
 	make
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	echo "Installing..."
 
 	sudo make install
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	sudo ldconfig
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	cd ../..
@@ -199,33 +232,37 @@ in_rtlsdr()
 	cd build/
 
 	cmake ../
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	echo "Compiling..."
 
 	make
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 	echo "Installing..."
 
 	sudo make install
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 	
 	echo "Installing udev rules"
 	sudo cp ../rtl-sdr.rules /etc/udev/rules.d/15-rtl-sdr.rules
 
 	sudo ldconfig
-	if [ $? -ne 0 ]
+	EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]
 	then
-		return $?
+		return $EXIT_CODE
 	fi
 
 	cd ../..
@@ -253,18 +290,38 @@ execute()
 	done
 }
 
+check_memory()
+{
+	# Compiling GNUradio needs at least this amount of memory or the compiler will crash
+	# This memory requirement arrived at by experimentation. Accurate to +- 50Mb
+	MINIMUM_MEM_KB=1400000
+	SWAP_KB=`cat /proc/swaps | awk '!/^Filename.*/ { print $3 }'`
+	MEMINFO=`cat /proc/meminfo`
+	MEM_FREE_KB=`cat /proc/meminfo | awk '/^MemFree.*/ { print $2 }'`
+	BUFFERS_KB=`cat /proc/meminfo | awk '/^Buffers.*/ { print $2 }'`
+	CACHED_KB=`cat /proc/meminfo | awk '/^Cached.*/ { print $2 }'`
+	AVAILABLE_KB=`expr $SWAP_KB + $MEM_FREE_KB + $BUFFERS_KB + $CACHED_KB`
+	echo "Available memory: ${AVAILABLE_KB}Kb"
+	if [ $AVAILABLE_KB -lt $MINIMUM_MEM_KB ]
+	then
+		echo "You must have at least ${MINIMUM_MEM_KB}Kb memory free to compile GNUradio (you have ${AVAILABLE_KB}Kb). Add more RAM or swap space."
+		return 1
+	fi
+	return 0
+}
+
 install()
 {
-	actions=("preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
-	msgs=("Install prequesites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNURadio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
+	actions=("check_memory" "preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
+	msgs=("Check memory" "Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNU Radio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
 
 	execute "${actions}" "${msgs}"
 }
 
 update()
 {
-	actions=("pull_gnuradio" "pull_rtlsdr" "pull_osmosdr" "pull_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
-	msgs=("Git pull GNURadio" "Git pull RTL-SDR" "Git pull OsmoSDR" "Git pull GQRX" "Install GNURadio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
+	actions=("check_memory" "pull_gnuradio" "pull_rtlsdr" "pull_osmosdr" "pull_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
+	msgs=("Check memory" "Git pull GNU Radio" "Git pull RTL-SDR" "Git pull OsmoSDR" "Git pull GQRX" "Install GNU Radio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
 
 	execute "${actions}" "${msgs}"
 }
@@ -273,6 +330,14 @@ fetch()
 {
 	actions=("pull_gnuradio" "pull_rtlsdr" "pull_osmosdr" "pull_gqrx")
 	msgs=("Git pull GNURadio" "Git pull RTL-SDR" "Git pull OsmoSDR" "Git pull GQRX")
+
+	execute "${actions}" "${msgs}"
+}
+
+prerequisites()
+{
+	actions=("preinstall")
+	msgs=("Install prerequisites")
 
 	execute "${actions}" "${msgs}"
 }
@@ -304,10 +369,14 @@ case "$1" in
 	fetch)
 		fetch
 		;;
+	prerequisites)
+		check_sudo
+		prerequisites
+		;;
 	*)
 		echo "rtl_sdr_kit - Installs and updates GNURadio, OsmoSDR, RTLSDR, and GQRX from source code hosted at respective Git repositories."
 		echo ""
-		echo "Usage: $0 [install|update|fetch]"
+		echo "Usage: $0 [install|update|fetch|prerequisites]"
 		exit 1
 		;; 
 esac
