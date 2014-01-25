@@ -295,7 +295,7 @@ check_memory()
 	# Compiling GNUradio needs at least this amount of memory or the compiler will crash
 	# This memory requirement arrived at by experimentation. Accurate to +- 50Mb
 	MINIMUM_MEM_KB=1400000
-	SWAP_KB=`cat /proc/swaps | awk '!/^Filename.*/ { print $3 }'`
+	SWAP_KB=`cat /proc/swaps | awk '!/^Filename.*/ { total += $3 } END { print total }'`
 	MEMINFO=`cat /proc/meminfo`
 	MEM_FREE_KB=`cat /proc/meminfo | awk '/^MemFree.*/ { print $2 }'`
 	BUFFERS_KB=`cat /proc/meminfo | awk '/^Buffers.*/ { print $2 }'`
