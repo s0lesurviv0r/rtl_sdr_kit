@@ -7,7 +7,10 @@
 #     2013-02-11 - Rewritten to detect if sudo is installed then display commands to install it.
 #		apt-get command given --force-yes argument to force unauthenticated packages to install.
 #		"apt-get update" line added to update package index before installing prereqs (Thanks to Wolfgang Schenk for bug report)
+#    
+#     2014-01-14 - Memory check prior to installation, tests for QT version, spell fix, prerequisites only target available (Ian Gibbs <realflash.uk@googlemail.com>)
 #
+#     2014-01-26 - Automatically blacklist RTL28xxu DVB Kernel module
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -310,10 +313,16 @@ check_memory()
 	return 0
 }
 
+blacklist_dvb()
+{
+  sudo sh -c "echo 'blacklist dvb_usb_rtl28xxu' > /etc/modprobe.d/blacklist-dvb-rtl28xxu.conf"
+  return $?
+}
+
 install()
 {
-	actions=("check_memory" "preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx")
-	msgs=("Check memory" "Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNU Radio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX")
+	actions=("check_memory" "preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx" "blacklist_dvb")
+	msgs=("Check memory" "Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNU Radio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX" "Blacklisting Linux RTL28xxu DVB Module")
 
 	execute "${actions}" "${msgs}"
 }
