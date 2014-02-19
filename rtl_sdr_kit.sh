@@ -37,13 +37,10 @@ preinstall()
 	if [ $QT5_RETURN -eq 0 ]; then
 	{	# QT5 is available, which may stop GQRX from compiling
 		QT5_STATUS=`dpkg -l qt5-default 2>&1 | sed -n '6p' | awk '{print $1}'`
-		if [ "$QT5_STATUS" == "ii" ]; then
-		{
-			ADDITIONS="qt4-default"
-		}
-		elif [ "$QT5_STATUS" == "un" ]; then
-		{	# Your distribution is already set to use QT4 ("un")
-			ADDITIONS=""
+		if [ "$QT5_STATUS" == "ii" -o "$QT5_STATUS" == "un" ]; then
+		{	# It is installed it will cause a problem with GQRX
+			# If it is not installed it will get selected as a dependency of other things, so we still need to override it
+			ADDITIONS="qt4-default"		# If this is already installed APT will silently ignore it
 		}
 		else
 		{
