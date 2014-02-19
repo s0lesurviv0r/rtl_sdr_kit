@@ -12,6 +12,8 @@
 #
 #     2014-01-26 - Automatically blacklist RTL28xxu DVB Kernel module
 #
+#     2014-02-19 - Improve QT version check to cover no QT installed scenario, add support for Lubuntu by installing pulseaudio if required and rebooting as necessary  (Ian Gibbs <realflash.uk@googlemail.com>)
+#
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
@@ -26,6 +28,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #!/bin/bash
+check_package_status()
+{
+	RES=`dpkg -l $1 2>&1 | sed -n '6p' | awk '{print $1}'`
+	echo $RES
+}
 
 preinstall()
 {
@@ -36,14 +43,11 @@ preinstall()
 	QT5_RETURN=$?
 	if [ $QT5_RETURN -eq 0 ]; then
 	{	# QT5 is available, which may stop GQRX from compiling
-		QT5_STATUS=`dpkg -l qt5-default 2>&1 | sed -n '6p' | awk '{print $1}'`
-		if [ "$QT5_STATUS" == "ii" ]; then
-		{
-			ADDITIONS="qt4-default"
-		}
-		elif [ "$QT5_STATUS" == "un" ]; then
-		{	# Your distribution is already set to use QT4 ("un")
-			ADDITIONS=""
+		QT5_STATUS=$(check_package_status qt5-default)
+		if [ "$QT5_STATUS" == "ii" -o "$QT5_STATUS" == "un" ]; then
+		{	# If it is installed it will cause a problem with GQRX
+			# If it is not installed it will get selected as a dependency of other things, so we still need to override it
+			ADDITIONS="qt4-default"		# If this is already installed APT will silently ignore it
 		}
 		else
 		{
@@ -54,6 +58,15 @@ preinstall()
 		fi
 	}
 	fi
+	# Lubuntu doesn't have pulseaudio which is needed for GQRX and dl-fldigi
+	PA_STATUS=$(check_package_status pulseadio)
+	if [ "$PA_STATUS" != "ii" ]; then
+	{
+		ADDITIONS="$ADDITIONS pulseaudio"
+		REBOOT_REQUIRED=1
+	}
+	fi
+	# Ready to install
 	sudo apt-get update
 	sudo apt-get -y --force-yes install libfontconfig1-dev libxrender-dev libpulse-dev \
 	swig g++ automake autoconf libtool python-dev libfftw3-dev \
@@ -319,10 +332,32 @@ blacklist_dvb()
   return $?
 }
 
+check_reboot()
+{
+	if [ "$REBOOT_REQUIRED" -gt 0 ]; then
+	{
+		echo -ne "\e[0;33m"
+		echo "One of the components that was installed requires the computer to be rebooted before it will work."
+		echo -ne "\e[0m"
+		if [ ! -z "$AUTO_REBOOT" ]; then
+		{
+			echo "You have requested an automatic reboot. The computer will reboot in 60s."
+			shutdown -r +1
+		}
+		else
+		{
+			echo "Please reboot the computer at your covnenience."
+		}
+		fi
+	}
+	fi
+	return 0 
+}
+
 install()
 {
-	actions=("check_memory" "preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx" "blacklist_dvb")
-	msgs=("Check memory" "Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNU Radio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX" "Blacklisting Linux RTL28xxu DVB Module")
+	actions=("check_memory" "preinstall" "git_gnuradio" "git_rtlsdr" "git_osmosdr" "git_gqrx" "in_gnuradio" "in_rtlsdr" "in_osmosdr" "in_gqrx" "blacklist_dvb" "check_reboot")
+	msgs=("Check memory" "Install prerequisites" "Git checkout GNURadio" "Git checkout RTL-SDR" "Git checkout OsmoSDR" "Git checkout GQRX" "Install GNU Radio" "Install RTL-SDR" "Install OsmoSDR" "Install GQRX" "Blacklisting Linux RTL28xxu DVB Module" "Check if a reboot is required")
 
 	execute "${actions}" "${msgs}"
 }
@@ -345,8 +380,8 @@ fetch()
 
 prerequisites()
 {
-	actions=("preinstall")
-	msgs=("Install prerequisites")
+	actions=("preinstall" "check_reboot")
+	msgs=("Install prerequisites" "Check if a reboot is required")
 
 	execute "${actions}" "${msgs}"
 }
@@ -386,6 +421,11 @@ case "$1" in
 		echo "rtl_sdr_kit - Installs and updates GNURadio, OsmoSDR, RTLSDR, and GQRX from source code hosted at respective Git repositories."
 		echo ""
 		echo "Usage: $0 [install|update|fetch|prerequisites]"
+		echo ""
+		echo "Some newly-installed components may require the computer to be rebooted before they will run properly. You will be told at the end of the installation if this is the case. To have the script automatically reboot the computer if required, set the environment variable AUTO_REBOOT to a non-empty string:
+	
+AUTO_REBOOT=y; $0 [install|prerequisistes]"
+		echo ""
 		exit 1
 		;; 
 esac
