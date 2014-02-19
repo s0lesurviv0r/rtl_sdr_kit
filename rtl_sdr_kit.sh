@@ -12,6 +12,8 @@
 #
 #     2014-01-26 - Automatically blacklist RTL28xxu DVB Kernel module
 #
+#     2014-02-19 - Improve QT version check to cover no QT installed scenario (Ian Gibbs <realflash.uk@googlemail.com>)
+#
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
@@ -38,7 +40,7 @@ preinstall()
 	{	# QT5 is available, which may stop GQRX from compiling
 		QT5_STATUS=`dpkg -l qt5-default 2>&1 | sed -n '6p' | awk '{print $1}'`
 		if [ "$QT5_STATUS" == "ii" -o "$QT5_STATUS" == "un" ]; then
-		{	# It is installed it will cause a problem with GQRX
+		{	# If it is installed it will cause a problem with GQRX
 			# If it is not installed it will get selected as a dependency of other things, so we still need to override it
 			ADDITIONS="qt4-default"		# If this is already installed APT will silently ignore it
 		}
