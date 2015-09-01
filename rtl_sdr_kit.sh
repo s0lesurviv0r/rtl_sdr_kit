@@ -30,7 +30,7 @@
 #!/bin/bash
 check_package_status()
 {
-	RES=`dpkg -l $1 2>&1 | sed -n '6p' | awk '{print $1}'`
+	RES=dpkg -l $1 2>&1 | sed -n '7p' | awk '{print $1}'
 	echo $RES
 }
 
