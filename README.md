@@ -1,10 +1,8 @@
-rtl_sdr_kit
-===========
+#rtl_sdr_kit
 
 Installs and updates GNURadio, OsmoSDR, RTLSDR, and GQRX from source code hosted at respective Git repositories.
 
-Introduction
-------------
+## Introduction
 
 The RTL2832 is an inexpensive chipset used in USB DVB (Digital Video Broadcast) dongles. It can be used to collect raw I/Q samples and therefore be used for SDR (Software Defined Radio).
 
@@ -15,8 +13,7 @@ This shell script installs a suite of applications intended for beginners or tho
 - RTLSDR - Includes utilities specific to the RTL2832 on a hardware level
 - GQRX - "Software defined radio receiver powered by GNU Radio and Qt"
 
-Install
--------
+## Install
 
 <pre>
 $ git clone https://github.com/jacobzelek/rtl_sdr_kit.git rtl_sdr_kit
@@ -25,28 +22,30 @@ $ chmod +x rtl_sdr_kit.sh
 $ ./rtl_sdr_kit.sh install
 </pre>
 
-Update      
--------
+## Update
 
 <pre>
 $ ./rtl_sdr_kit.sh update
 </pre>
 
-Usage
------
+## Usage
 
 The following applications can be executed from a shell (terminal)
 
-**SDR Prototyping**
-- $ gnuradio-companion - Design RF systems using RF "blocks" in a GUI environment
+### SDR Prototyping
+`gnuradio-companion` - Design RF systems using RF "blocks" in a GUI environment
 
-**RTL2832**
-- $ rtl_test - Test functionality of RTL2832 dongle
-- $ rtl_fm
-- $ rtl_tcp
-- $ rtl_sdr
+### RTL2832
+
+`rtl_test` - Test functionality of RTL2832 dongle
+
+`rtl_fm`
+
+`rtl_tcp`
+
+`rtl_sdr`
 
 Please refer to http://sdr.osmocom.org/trac/wiki/rtl-sdr for details
 
-**General**
-- $ gqrx - GUI application for general purpose receiving
+### General
+`gqrx` - GUI application for general purpose receiving
